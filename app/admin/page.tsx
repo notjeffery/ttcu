@@ -9,6 +9,7 @@ export default function AdminPage() {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [reference, setReference] = useState("");
+  const [date, setDate] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -26,6 +27,7 @@ export default function AdminPage() {
         description,
         reference,
         entryType,
+        date: date || undefined,
       }),
     });
 
@@ -43,6 +45,7 @@ export default function AdminPage() {
     setAmount("");
     setDescription("");
     setReference("");
+    setDate("");
   }
 
   return (
@@ -113,6 +116,18 @@ export default function AdminPage() {
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0.00"
               required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Date <span className="text-brand-navy/40 font-normal">(optional — defaults to today)</span>
+            </label>
+            <input
+              className="input"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
             />
           </div>
 

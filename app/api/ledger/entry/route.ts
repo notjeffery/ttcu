@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase-admin";
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { accountNumber, amount, description, reference, entryType } = body;
+  const { accountNumber, amount, description, reference, entryType, date } = body;
 
   if (!accountNumber || !amount || !entryType) {
     return NextResponse.json(
@@ -53,6 +53,9 @@ export async function POST(request: Request) {
     amount,
     description: description || (entryType === "credit" ? "Manual credit" : "Manual debit"),
     reference: reference || null,
+    // If a date is provided, use it (backdating); otherwise Postgres
+    // defaults created_at to now().
+    ...(date ? { created_at: new Date(date).toISOString() } : {}),
   });
 
   if (insertError) {
