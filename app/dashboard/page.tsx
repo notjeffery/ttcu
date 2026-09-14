@@ -1,13 +1,14 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import Greeting from "@/components/Greeting";
 import BottomNav from "@/components/BottomNav";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { ArrowUpRight, ArrowDownLeft, CirclePlus } from "lucide-react";
 
 const quickActions = [
-  { label: "Send", icon: ArrowUpRight },
-  { label: "Request", icon: ArrowDownLeft },
-  { label: "Add funds", icon: CirclePlus },
+  { label: "Send", icon: ArrowUpRight, href: "/send" },
+  { label: "Request", icon: ArrowDownLeft, href: "/request" },
+  { label: "Add funds", icon: CirclePlus, href: "/add-funds" },
 ];
 
 export default async function DashboardPage() {
@@ -75,7 +76,7 @@ export default async function DashboardPage() {
 
         <div className="card p-6 mb-6 bg-gradient-to-br from-brand-blue to-brand-blue-dark text-white">
           <div className="flex items-center justify-between mb-8">
-            <span className="font-semibold tracking-tight">Texas Trust Credit Union</span>
+            <span className="font-semibold tracking-tight">ttcu</span>
             <span className="text-xs uppercase tracking-wide text-white/70">Debit</span>
           </div>
           <p className="text-sm text-white/70 mb-1">Current balance</p>
@@ -89,19 +90,20 @@ export default async function DashboardPage() {
 
         <div className="grid grid-cols-3 gap-3 mb-8">
           {quickActions.map((action) => (
-            <button
+            <Link
               key={action.label}
+              href={action.href}
               className="card py-4 flex flex-col items-center gap-2 hover:border-brand-blue transition-colors"
             >
               <action.icon className="w-6 h-6 text-brand-blue" strokeWidth={1.75} />
               <span className="text-sm font-medium">{action.label}</span>
-            </button>
+            </Link>
           ))}
         </div>
 
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">Transactions</h2>
-          <a href="#" className="text-sm text-brand-blue font-medium">
+          <a href="/transactions" className="text-sm text-brand-blue font-medium">
             View all
           </a>
         </div>

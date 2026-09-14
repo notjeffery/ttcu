@@ -50,3 +50,10 @@ create policy "Users can view their own ledger entries"
       select id from public.accounts where user_id = auth.uid()
     )
   );
+
+Per-action restrictions, admin-controlled. When true, that action is
+-- blocked for the account and the user should use their card instead.
+alter table public.accounts
+  add column if not exists send_restricted boolean not null default false,
+  add column if not exists request_restricted boolean not null default false,
+  add column if not exists add_funds_restricted boolean not null default false;

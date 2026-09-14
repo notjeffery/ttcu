@@ -36,7 +36,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#12141a] flex flex-col">
-      <div className="relative h-[40vh] min-h-[280px] overflow-hidden">
+      <div className="relative overflow-hidden">
         <LoginLogo />
       </div>
 
