@@ -38,11 +38,7 @@ export default function RequestForm({ restricted }: { restricted: boolean }) {
           </div>
         ) : (
           <>
-            <p className="text-sm text-brand-navy/60 mb-4">
-              This doesn&apos;t send a real notification yet — it just
-              previews what a request would look like.
-            </p>
-
+            
             {generated ? (
               <div className="card p-6 space-y-3">
                 <p className="text-sm text-brand-navy/60">Request summary</p>

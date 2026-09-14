@@ -70,12 +70,6 @@ export default function AddFundsForm({ restricted }: { restricted: boolean }) {
               </p>
             )}
 
-            <p className="text-sm text-brand-navy/60 mb-4">
-              Simulates a deposit from a linked external account or card. No
-              real bank/card is connected yet — this just posts a credit for
-              testing.
-            </p>
-
             <form onSubmit={handleSubmit} className="card p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Amount</label>
