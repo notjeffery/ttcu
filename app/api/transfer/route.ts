@@ -3,11 +3,12 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 
 export async function POST(request: Request) {
-  const { recipientAccountNumber, amount, description } = await request.json();
+  const { recipientAccountNumber, recipientRoutingNumber, amount, description } =
+    await request.json();
 
-  if (!recipientAccountNumber || !amount || amount <= 0) {
+  if (!recipientAccountNumber || !recipientRoutingNumber || !amount || amount <= 0) {
     return NextResponse.json(
-      { error: "recipientAccountNumber and a positive amount are required" },
+      { error: "Recipient account number, routing number, and a positive amount are required" },
       { status: 400 }
     );
   }
@@ -46,12 +47,16 @@ export async function POST(request: Request) {
 
   const { data: recipientAccount } = await admin
     .from("accounts")
-    .select("id")
+    .select("id, full_name, routing_number")
     .eq("account_number", recipientAccountNumber)
     .single();
 
   if (!recipientAccount) {
     return NextResponse.json({ error: "Recipient account not found" }, { status: 404 });
+  }
+
+  if (recipientAccount.routing_number !== recipientRoutingNumber) {
+    return NextResponse.json({ error: "Routing number doesn't match recipient account" }, { status: 400 });
   }
 
   const { data: balanceRow } = await admin
@@ -70,7 +75,7 @@ export async function POST(request: Request) {
     account_id: senderAccount.id,
     entry_type: "debit",
     amount,
-    description: description || `Transfer to ${recipientAccountNumber}`,
+    description: description || `Transfer to ${recipientAccount.full_name}`,
   });
 
   if (debitError) {
@@ -88,5 +93,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: creditError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, recipientName: recipientAccount.full_name });
 }

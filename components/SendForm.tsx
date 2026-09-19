@@ -1,15 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 
 export default function SendForm({ restricted }: { restricted: boolean }) {
+  const router = useRouter();
   const [recipientAccountNumber, setRecipientAccountNumber] = useState("");
+  const [recipientRoutingNumber, setRecipientRoutingNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [message, setMessage] = useState("");
+
+  const [lookupName, setLookupName] = useState<string | null>(null);
+  const [lookupError, setLookupError] = useState("");
+  const [lookupLoading, setLookupLoading] = useState(false);
+
+  useEffect(() => {
+    setLookupName(null);
+    setLookupError("");
+
+    if (recipientAccountNumber.length < 6 || recipientRoutingNumber.length < 6) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setLookupLoading(true);
+      try {
+        const res = await fetch(
+          "/api/accounts/lookup?accountNumber=" +
+            encodeURIComponent(recipientAccountNumber) +
+            "&routingNumber=" +
+            encodeURIComponent(recipientRoutingNumber)
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          setLookupError(data.error || "Account not found");
+        } else {
+          setLookupName(data.fullName);
+        }
+      } catch {
+        setLookupError("Couldn't look up account");
+      } finally {
+        setLookupLoading(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [recipientAccountNumber, recipientRoutingNumber]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -21,6 +61,7 @@ export default function SendForm({ restricted }: { restricted: boolean }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         recipientAccountNumber,
+        recipientRoutingNumber,
         amount: parseFloat(amount),
         description,
       }),
@@ -34,11 +75,11 @@ export default function SendForm({ restricted }: { restricted: boolean }) {
       return;
     }
 
-    setStatus("success");
-    setMessage("Money sent successfully");
-    setRecipientAccountNumber("");
-    setAmount("");
-    setDescription("");
+    const params = new URLSearchParams({
+      amount,
+      name: data.recipientName || "",
+    });
+    router.push(`/send/success?${params.toString()}`);
   }
 
   return (
@@ -65,13 +106,7 @@ export default function SendForm({ restricted }: { restricted: boolean }) {
         ) : (
           <>
             {message && (
-              <p
-                className={`mb-4 text-sm rounded-md px-3 py-2 ${
-                  status === "success"
-                    ? "text-brand-success bg-brand-success/10"
-                    : "text-brand-danger bg-brand-danger/10"
-                }`}
-              >
+              <p className="mb-4 text-sm rounded-md px-3 py-2 text-brand-danger bg-brand-danger/10">
                 {message}
               </p>
             )}
@@ -87,6 +122,31 @@ export default function SendForm({ restricted }: { restricted: boolean }) {
                   required
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Recipient routing number</label>
+                <input
+                  className="input"
+                  value={recipientRoutingNumber}
+                  onChange={(e) => setRecipientRoutingNumber(e.target.value)}
+                  placeholder="9-digit routing number"
+                  required
+                />
+              </div>
+
+              {lookupLoading && (
+                <p className="text-sm text-brand-navy/50">Looking up account...</p>
+              )}
+              {lookupName && (
+                <p className="text-sm rounded-md px-3 py-2 text-brand-success bg-brand-success/10">
+                  Sending to: <span className="font-semibold">{lookupName}</span>
+                </p>
+              )}
+              {lookupError && !lookupLoading && (
+                <p className="text-sm rounded-md px-3 py-2 text-brand-danger bg-brand-danger/10">
+                  {lookupError}
+                </p>
+              )}
 
               <div>
                 <label className="block text-sm font-medium mb-1">Amount</label>
@@ -111,7 +171,11 @@ export default function SendForm({ restricted }: { restricted: boolean }) {
                 />
               </div>
 
-              <button type="submit" className="btn-primary w-full" disabled={status === "loading"}>
+              <button
+                type="submit"
+                className="btn-primary w-full"
+                disabled={status === "loading" || !lookupName}
+              >
                 {status === "loading" ? "Sending..." : "Send money"}
               </button>
             </form>
