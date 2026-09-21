@@ -42,7 +42,7 @@ export default async function SendSuccessPage({
           <p className="text-brand-success font-semibold mb-1">Sent successfully</p>
           <p className="text-sm text-brand-navy/70">
             {amount && `$${parseFloat(amount).toFixed(2)} `}
-            {name && `sent to ${name}.`}
+            {name ? `sent to ${name}.` : "sent."}
           </p>
         </div>
 
