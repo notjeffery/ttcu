@@ -5,6 +5,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 
+function parseAmount(value: string): number {
+  // Strip anything that isn't a digit or a decimal point (commas,
+  // spaces, currency symbols, etc.) before parsing — protects against
+  // autofill/keyboard formatting that silently breaks native number inputs.
+  const cleaned = value.replace(/[^0-9.]/g, "");
+  return parseFloat(cleaned);
+}
+
 export default function SendForm({ restricted }: { restricted: boolean }) {
   const router = useRouter();
   const [recipientAccountNumber, setRecipientAccountNumber] = useState("");
@@ -19,13 +27,21 @@ export default function SendForm({ restricted }: { restricted: boolean }) {
     setStatus("loading");
     setMessage("");
 
+    const parsedAmount = parseAmount(amount);
+
+    if (!parsedAmount || parsedAmount <= 0 || isNaN(parsedAmount)) {
+      setStatus("error");
+      setMessage("Enter a valid amount");
+      return;
+    }
+
     const res = await fetch("/api/transfer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         recipientAccountNumber,
         recipientRoutingNumber,
-        amount: parseFloat(amount),
+        amount: parsedAmount,
         description,
       }),
     });
@@ -39,7 +55,7 @@ export default function SendForm({ restricted }: { restricted: boolean }) {
     }
 
     const params = new URLSearchParams({
-      amount,
+      amount: parsedAmount.toString(),
       name: data.recipientName || "",
     });
     router.push(`/send/success?${params.toString()}`);
@@ -101,8 +117,8 @@ export default function SendForm({ restricted }: { restricted: boolean }) {
                 <label className="block text-sm font-medium mb-1">Amount</label>
                 <input
                   className="input"
-                  type="number"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
